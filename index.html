@@ -432,38 +432,32 @@
         const syncStatusIndicator = document.getElementById('sync-status');
 
         const setupFirebase = async () => {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                try {
-                    const firebaseConfig = JSON.parse(__firebase_config);
-                    appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                    
-                    const app = initializeApp(firebaseConfig);
-                    const auth = getAuth(app);
-                    db = getFirestore(app);
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDURm_rUkX6S_s7S-ToJ3XjfhKja2V4fFQ",
+                    authDomain: "rouh-store-a4b00.firebaseapp.com",
+                    projectId: "rouh-store-a4b00",
+                    storageBucket: "rouh-store-a4b00.firebasestorage.app",
+                    messagingSenderId: "765883097228",
+                    appId: "1:765883097228:web:eb2a12f951d86f1ecf9ba9",
+                    measurementId: "G-5S6KKEL6JY"
+                };
 
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
 
-                    onAuthStateChanged(auth, (u) => {
-                        user = u;
-                        if (user) listenToCloudData();
-                    });
-                } catch (error) {
-                    console.error("Firebase error:", error);
-                    syncStatusIndicator.classList.replace('bg-gray-400', 'bg-red-500');
-                    syncStatusIndicator.title = "خطأ في الاتصال السحابي";
-                }
-            } else {
-                syncStatusIndicator.style.display = 'none';
+                // بدء الاستماع للبيانات السحابية
+                listenToCloudData();
+            } catch (error) {
+                console.error("Firebase error:", error);
+                syncStatusIndicator.classList.replace('bg-gray-400', 'bg-red-500');
+                syncStatusIndicator.title = "خطأ في الاتصال السحابي";
             }
         };
 
         const listenToCloudData = () => {
-            if (!user || !db) return;
-            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'store_data', 'bom_state');
+            if (!db) return;
+            const docRef = doc(db, 'rouh_store', 'main_data');
             syncStatusIndicator.classList.replace('bg-gray-400', 'bg-yellow-400');
             
             onSnapshot(docRef, (snapshot) => {
@@ -481,6 +475,7 @@
                 syncStatusIndicator.classList.replace('bg-yellow-400', 'bg-green-500');
                 syncStatusIndicator.title = "متصل سحابياً";
             }, (error) => {
+                console.error(error);
                 syncStatusIndicator.classList.replace('bg-green-500', 'bg-red-500');
             });
         };
@@ -495,12 +490,13 @@
             localStorage.setItem('rouh_sales', JSON.stringify(sales));
             renderAll();
 
-            if (user && db) {
+            if (db) {
                 try {
-                    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'store_data', 'bom_state');
+                    const docRef = doc(db, 'rouh_store', 'main_data');
                     await setDoc(docRef, { materials, products, sales });
                     syncStatusIndicator.classList.replace('bg-red-500', 'bg-green-500');
                 } catch (e) {
+                    console.error(e);
                     syncStatusIndicator.classList.replace('bg-green-500', 'bg-red-500');
                 }
             }
